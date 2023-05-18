@@ -1,0 +1,9 @@
+mqtt:
+  brokers:
+    - "mqtt://127.0.0.1:1883"
+  client_id: "atm-backend"
+
+  topics: # ATM devices' topics
+    - "pulseacceptord-1"
+
+log_format: "pretty"
