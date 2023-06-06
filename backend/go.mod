@@ -1,4 +1,4 @@
-module gitlab.com/monero-atm/atm-pico
+module gitlab.com/monero-atm/atm-pico/backend
 
 go 1.20
 
