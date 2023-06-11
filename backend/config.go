@@ -2,20 +2,22 @@ package main
 
 import (
 	"log"
+	"net/url"
 	"os"
 	"time"
-	"net/url"
 
-	"gopkg.in/yaml.v3"
+	"github.com/eclipse/paho.golang/paho"
 	"github.com/rs/zerolog"
 	zlog "github.com/rs/zerolog/log"
+	"gopkg.in/yaml.v3"
 )
 
 type brokerConfig struct {
-	Brokers    []string `yaml:"brokers"`
-	Topics     []string `yaml:"topics"`
-	ClientId   string   `yaml:"client_id"`
-	BrokerUrls []*url.URL
+	Brokers       []string `yaml:"brokers"`
+	Topics        []string `yaml:"topics"`
+	ClientId      string   `yaml:"client_id"`
+	BrokerUrls    []*url.URL
+	Subscriptions map[string]paho.SubscribeOptions
 }
 
 type backendConfig struct {
@@ -35,7 +37,7 @@ func loadConfig() backendConfig {
 
 	if cfg.LogFormat == "pretty" {
 		zlog.Logger = zlog.Output(zerolog.ConsoleWriter{Out: os.Stderr,
-		    TimeFormat: time.RFC3339})
+			TimeFormat: time.RFC3339})
 	}
 
 	for _, urlStr := range cfg.Mqtt.Brokers {
@@ -44,6 +46,11 @@ func loadConfig() backendConfig {
 			log.Fatal("Failed to parse broker URL.")
 		}
 		cfg.Mqtt.BrokerUrls = append(cfg.Mqtt.BrokerUrls, u)
+	}
+
+	cfg.Mqtt.Subscriptions = make(map[string]paho.SubscribeOptions)
+	for _, topic := range cfg.Mqtt.Topics {
+		cfg.Mqtt.Subscriptions[topic] = paho.SubscribeOptions{QoS: 2, NoLocal: true}
 	}
 
 	return cfg

@@ -14,18 +14,17 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
+var cfg backendConfig
+
 func onConnectionUp(cm *autopaho.ConnectionManager, connAck *paho.Connack) {
-        log.Info().Msg("MQTT connection up.")
-        if _, err := cm.Subscribe(context.Background(), &paho.Subscribe{
-                Subscriptions: map[string]paho.SubscribeOptions{
-                        "pulseacceptord":   {QoS: 2, NoLocal: true},
-                        "pulseacceptord-2": {QoS: 2, NoLocal: true},
-                },
-        }); err != nil {
-                log.Error().Err(err).Msg("Failed to subscribe. This is likely to mean no messages will be received.")
-                return
-        }
-        log.Info().Msg("MQTT subscription made.")
+	log.Info().Msg("MQTT connection up.")
+	if _, err := cm.Subscribe(context.Background(), &paho.Subscribe{
+		Subscriptions: cfg.Mqtt.Subscriptions,
+	}); err != nil {
+		log.Error().Err(err).Msg("Failed to subscribe. This is likely to mean no messages will be received.")
+		return
+	}
+	log.Info().Msg("MQTT subscription made.")
 }
 
 func onConnectionError(err error) {
@@ -45,10 +44,10 @@ func onServerDisconnect(d *paho.Disconnect) {
 }
 
 func main() {
-	cfg := loadConfig()
+	cfg = loadConfig()
 
 	cliCfg := autopaho.ClientConfig{
-		BrokerUrls: cfg.Mqtt.BrokerUrls,
+		BrokerUrls:     cfg.Mqtt.BrokerUrls,
 		OnConnectionUp: onConnectionUp,
 		OnConnectError: onConnectionError,
 		ClientConfig: paho.ClientConfig{
@@ -56,7 +55,7 @@ func main() {
 			Router: paho.NewSingleHandlerRouter(func(m *paho.Publish) {
 				handleEvents(m)
 			}),
-			OnClientError: onClientError,
+			OnClientError:      onClientError,
 			OnServerDisconnect: onServerDisconnect,
 		},
 	}
@@ -72,26 +71,26 @@ func main() {
 	// This is where we send messages to ATM components.
 	// This isn't where we reply.
 	go func(broker *autopaho.ConnectionManager) {
-		res := "false"
+		res := "stop"
 		for {
 			pr, err := broker.Publish(ctx, &paho.Publish{
 				QoS:     2,
 				Topic:   "pulseacceptord-1",
-				Payload: []byte(fmt.Sprintf(`{"accept": %s}`, res)),
+				Payload: []byte(fmt.Sprintf(`{"cmd": "%s"}`, res)),
 			})
 			if err != nil {
 				log.Error().Err(err).Msg("Error publishing.")
 			} else if pr.ReasonCode != 0 && pr.ReasonCode != 16 { // 16 = Server received message but there are no subscribers
 				log.Warn().Int("reason_code", int(pr.ReasonCode)).Msg("")
 			}
-			log.Info().Msg("Sent message: state change.")
-			time.Sleep(10 * time.Second)
+			log.Info().Str("state", res).Msg("Sent message: state change.")
+			time.Sleep(5 * time.Second)
 
 			if rand.Intn(6)%2 == 0 {
-				if res == "false" {
-					res = "true"
+				if res == "stop" {
+					res = "start"
 				} else {
-					res = "false"
+					res = "stop"
 				}
 			}
 		}
