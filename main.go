@@ -9,6 +9,7 @@ import (
 	"github.com/eclipse/paho.golang/autopaho"
 	"github.com/rs/zerolog/log"
 	"gitlab.com/openkiosk/proto"
+	"github.com/charmbracelet/lipgloss"
 )
 
 type State int
@@ -26,7 +27,9 @@ type model struct {
 	address   string
 	euro      int64
 	xmr       int64
+	height, width int
 	textinput textinput.Model
+	textstyle lipgloss.Style
 }
 
 var sub chan proto.Event
@@ -57,6 +60,7 @@ func InitialModel() model {
 		broker:    connectToBroker(),
 		state:     Idle,
 		textinput: ti,
+		textstyle: lipgloss.NewStyle().Align(lipgloss.Center).Padding(2),
 	}
 }
 
@@ -68,6 +72,9 @@ func (m model) Init() tea.Cmd {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.textstyle.Width(msg.Width)
+		m.textstyle.Height(msg.Height)
 	case tea.KeyMsg:
 		switch msg.Type {
 		case tea.KeyCtrlC, tea.KeyEsc:
@@ -145,17 +152,20 @@ func (m model) View() string {
 
 // TODO: Pimp my idle view
 func IdleView(m model) string {
-	return fmt.Sprintf("Displaying cool ads and animations. Press any key to start buying Monero.")
+	return m.textstyle.Render("Displaying cool ads and animations. Press any key to start buying Monero.")
+	//return fmt.Sprintf("Displaying cool ads and animations. Press any key to start buying Monero.")
 }
 
 func AddressInView(m model) string {
-	return fmt.Sprintf("Enter the receiving address using the keyboard or scan QR code\n\n%s", m.textinput.View())
+	return m.textstyle.Render(
+	"Enter the receiving address using the keyboard or scan QR code:\n\n",
+		m.textinput.View())
 }
 
 func MoneyInView(m model) string {
-	return fmt.Sprintf("Received: %.2f EUR\n\nPress enter to proceed.", float64(m.euro))
+	return m.textstyle.Render(fmt.Sprintf("Received: %.2f EUR", float64(m.euro)), "\n\n", "Press enter to proceed.")
 }
 
 func TxInfoView(m model) string {
-	return fmt.Sprintf("No TxId yet but your address: %s, amount: %.2f EUR", m.address, float64(m.euro))
+	return m.textstyle.Render(fmt.Sprintf("No TxId yet but your address: %s, amount: %.2f EUR", m.address, float64(m.euro)))
 }
