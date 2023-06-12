@@ -1,8 +1,8 @@
 package main
 
 import (
-	"fmt"
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/eclipse/paho.golang/autopaho"
@@ -39,7 +39,7 @@ func onServerDisconnect(d *paho.Disconnect) {
 	}
 }
 
-func connectToBroker() (*autopaho.ConnectionManager) {
+func connectToBroker() *autopaho.ConnectionManager {
 	cfg = loadConfig()
 
 	cliCfg := autopaho.ClientConfig{
@@ -65,31 +65,31 @@ func connectToBroker() (*autopaho.ConnectionManager) {
 	// This is where we send messages to ATM components.
 	// This isn't where we reply.
 	/*
-	go func(broker *autopaho.ConnectionManager) {
-		res := "stop"
-		for {
-			pr, err := broker.Publish(ctx, &paho.Publish{
-				QoS:     2,
-				Topic:   "codescannerd",
-				Payload: []byte(fmt.Sprintf(`{"cmd": "%s"}`, res)),
-			})
-			if err != nil {
-				log.Error().Err(err).Msg("Error publishing.")
-			} else if pr.ReasonCode != 0 && pr.ReasonCode != 16 { // 16 = Server received message but there are no subscribers
-				log.Warn().Int("reason_code", int(pr.ReasonCode)).Msg("")
-			}
-			log.Info().Str("state", res).Msg("Sent message: state change.")
-			time.Sleep(5 * time.Second)
+		go func(broker *autopaho.ConnectionManager) {
+			res := "stop"
+			for {
+				pr, err := broker.Publish(ctx, &paho.Publish{
+					QoS:     2,
+					Topic:   "codescannerd",
+					Payload: []byte(fmt.Sprintf(`{"cmd": "%s"}`, res)),
+				})
+				if err != nil {
+					log.Error().Err(err).Msg("Error publishing.")
+				} else if pr.ReasonCode != 0 && pr.ReasonCode != 16 { // 16 = Server received message but there are no subscribers
+					log.Warn().Int("reason_code", int(pr.ReasonCode)).Msg("")
+				}
+				log.Info().Str("state", res).Msg("Sent message: state change.")
+				time.Sleep(5 * time.Second)
 
-			if rand.Intn(6)%2 == 0 {
-				if res == "stop" {
-					res = "start"
-				} else {
-					res = "stop"
+				if rand.Intn(6)%2 == 0 {
+					if res == "stop" {
+						res = "start"
+					} else {
+						res = "stop"
+					}
 				}
 			}
-		}
-	}(cm)
+		}(cm)
 	*/
 }
 

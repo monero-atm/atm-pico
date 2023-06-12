@@ -14,4 +14,5 @@ func handleEvents(msg *paho.Publish) {
 		log.Error().Err(err).Str("payload", string(msg.Payload)).Msg("Message could not be parsed")
 	}
 	log.Info().Str("payload", string(msg.Payload)).Str("topic", msg.Topic).Msg("Received event")
+	sub <- m
 }

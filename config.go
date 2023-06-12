@@ -1,11 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/url"
 	"os"
 	"time"
-	"fmt"
 
 	"github.com/eclipse/paho.golang/paho"
 	"github.com/rs/zerolog"
@@ -36,8 +36,13 @@ func loadConfig() backendConfig {
 		log.Fatal("Failed to unmarshal yaml: ", err)
 	}
 
+	f, err := os.OpenFile("log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
+	if err != nil {
+		panic(err)
+	}
+
 	if cfg.LogFormat == "pretty" {
-		zlog.Logger = zlog.Output(zerolog.ConsoleWriter{Out: os.Stderr,
+		zlog.Logger = zlog.Output(zerolog.ConsoleWriter{Out: f,
 			TimeFormat: time.RFC3339})
 	}
 
