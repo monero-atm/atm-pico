@@ -5,6 +5,7 @@ go 1.19
 require (
 	github.com/charmbracelet/bubbles v0.16.1
 	github.com/charmbracelet/bubbletea v0.24.2
+	github.com/charmbracelet/lipgloss v0.7.1
 	github.com/eclipse/paho.golang v0.11.0
 	github.com/rs/zerolog v1.29.1
 	gitlab.com/openkiosk/proto v0.0.0-20230612142012-deb2b471c26e
@@ -14,7 +15,6 @@ require (
 require (
 	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
-	github.com/charmbracelet/lipgloss v0.7.1 // indirect
 	github.com/containerd/console v1.0.4-0.20230313162750-1ae8d489ac81 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
