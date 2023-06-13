@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/url"
 	"os"
@@ -59,7 +58,5 @@ func loadConfig() backendConfig {
 		cfg.Mqtt.Subscriptions[topic] = paho.SubscribeOptions{QoS: 2, NoLocal: true}
 	}
 
-	log.Printf("%v", cfg)
-	fmt.Scanln()
 	return cfg
 }
