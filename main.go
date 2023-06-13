@@ -1,8 +1,6 @@
 package main
 
 import (
-	"encoding/base64"
-	"fmt"
 	"time"
 
 	"github.com/charmbracelet/bubbles/spinner"
@@ -30,7 +28,6 @@ type model struct {
 	// Timer to automatically go back to idle state if the user left it alone
 	timer     timer.Model
 	showTimer bool
-
 	broker    *autopaho.ConnectionManager
 	state     State
 	address   string
@@ -40,8 +37,6 @@ type model struct {
 	width     int
 	textinput textinput.Model
 	spinner   spinner.Model
-	textstyle lipgloss.Style
-	timerstyle lipgloss.Style
 }
 
 var sub chan proto.Event
@@ -60,6 +55,9 @@ func main() {
 	}
 }
 
+var titleStyle = lipgloss.NewStyle().Bold(true).Padding(1)
+var textStyle = lipgloss.NewStyle().Align(lipgloss.Center).Padding(2)
+
 func InitialModel() model {
 	ti := textinput.New()
 	ti.Placeholder = "8..."
@@ -73,8 +71,6 @@ func InitialModel() model {
 		broker:    connectToBroker(),
 		state:     Idle,
 		textinput: ti,
-		textstyle: lipgloss.NewStyle().Align(lipgloss.Center).Padding(2),
-		timerstyle: lipgloss.NewStyle().Align(lipgloss.Bottom).Padding(2),
 	}
 
 	spinnerStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("69"))
@@ -92,7 +88,6 @@ func (m model) Init() tea.Cmd {
 		waitForActivity(sub)) // wait for activity
 }
 
-
 func NextState(m *model) {
 	m.state += 1
 	if m.state > 3 {
@@ -105,7 +100,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// These messages are handled always regardless of the state
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		m.textstyle.Width(msg.Width)
+		textStyle.Width(msg.Width)
 		m.width = msg.Width
 		m.height = msg.Height
 	case tea.KeyMsg:
@@ -130,113 +125,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m model) IdleUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
-	log.Info().Msg("Hello from idle")
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		if msg.Type == tea.KeyEnter {
-			cmd(m.broker, "codescannerd", "start")
-			NextState(&m)	
-			return m, m.timer.Init()
-		}
-	}
-	return m, nil
-}
-
-func (m model) AddressInUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		if msg.Type == tea.KeyEnter {
-			cmd(m.broker, "codescannerd", "stop")
-			m.address = m.textinput.Value()
-			m.textinput.Reset()
-			cmd(m.broker, "pulseacceptord", "start")
-			m.timer = timer.NewWithInterval(timeout, time.Second)
-			NextState(&m)
-			return m, tea.Batch(m.spinner.Tick, m.timer.Init())
-		}
-	case timer.TickMsg:
-		var timerCmd tea.Cmd
-		m.timer, timerCmd = m.timer.Update(msg)
-		return m, timerCmd
-	case timer.TimeoutMsg:
-		m.state = Idle
-		m.timer = timer.NewWithInterval(timeout, time.Second)
-		return m, nil
-	case proto.Event:
-		log.Info().Str("type", msg.Event).Msg("Got event!")
-		log.Info().Msg("case proto.Event")
-
-		if msg.Event == "codescan" {
-			log.Info().Str("data", fmt.Sprintf("%v", msg)).Msg("")
-			data, err := proto.GetScanData(msg.Data)
-			if err != nil {
-				log.Error().Err(err).Msg("Failed to unmarshall scan data")
-			}
-			decoded, err := base64.StdEncoding.DecodeString(data.Scan)
-			if err != nil {
-				panic(err)
-			}
-			m.textinput.SetValue(string(decoded))
-		}
-		return m, waitForActivity(sub)
-	}
-	var tiCmd tea.Cmd
-	m.textinput, tiCmd = m.textinput.Update(msg)
-	return m, tiCmd
-}
-
-func (m model) MoneyInUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		if msg.Type == tea.KeyEnter {
-			NextState(&m)
-			cmd(m.broker, "pulseacceptord", "stop")
-		}
-	case timer.TickMsg:
-		var timerCmd tea.Cmd
-		m.timer, timerCmd = m.timer.Update(msg)
-		return m, timerCmd
-	case timer.TimeoutMsg:
-		m.state = Idle
-		return m, nil
-	/*case timer.TickMsg:
-		var timerCmd tea.Cmd
-		m.timer, cmd = m.timer.Update(msg)
-		return m, timerCmd*/
-	case proto.Event:
-		log.Info().Str("type", msg.Event).Msg("Got event!")
-		log.Info().Msg("case proto.Event")
-		if msg.Event == "moneyin" {
-			data, err := proto.GetMoneyinData(msg.Data)
-			if err != nil {
-				log.Error().Err(err).Msg("Failed to unmarshall scan data")
-			}
-			m.euro += data.Amount // record external activity
-		}
-		return m, waitForActivity(sub)
-	case spinner.TickMsg:
-		var cmd tea.Cmd
-		m.spinner, cmd = m.spinner.Update(msg)
-		return m, cmd
-	}
-	return m, nil
-}
-
-func (m model) TxInfoUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		if msg.Type == tea.KeyEnter {
-			NextState(&m)
-		}/*
-	case timer.TickMsg:
-		var timerCmd tea.Cmd
-		m.timer, cmd = m.timer.Update(msg)
-		return m, timerCmd*/
-	}
-	return m, nil
-}
-
 // View returns a string based on data in the model. That string which will be
 // rendered to the terminal.
 func (m model) View() string {
@@ -249,34 +137,4 @@ func (m model) View() string {
 		return TxInfoView(m)
 	}
 	return IdleView(m)
-}
-
-// TODO: Pimp my idle view
-func IdleView(m model) string {
-	return m.textstyle.Render("Displaying cool ads and animations. Press any key to start buying Monero.") 
-	//return fmt.Sprintf("Displaying cool ads and animations. Press any key to start buying Monero.")
-}
-
-func AddressInView(m model) string {
-	textBlock := m.textstyle.Render(
-                "Enter the receiving address using the keyboard or scan QR code:\n\n",
-                m.textinput.View())
-	//tBlock := m.timerstyle.Render(m.timer.View())
-	h := lipgloss.Height(textBlock)
-	tBlock := lipgloss.Place(m.width, m.height-h, lipgloss.Right, lipgloss.Bottom, m.timer.View())
-	return lipgloss.JoinVertical(lipgloss.Right, textBlock, tBlock)
-}
-
-func MoneyInView(m model) string {
-	textBlock := m.textstyle.Render(m.spinner.View(),
-		fmt.Sprintf("Received: %.2f EUR", float64(m.euro)),
-		"\n\n", "Press enter to proceed.")
-
-	h := lipgloss.Height(textBlock)
-	tBlock := lipgloss.Place(m.width, m.height-h, lipgloss.Right, lipgloss.Bottom, m.timer.View())
-	return lipgloss.JoinVertical(lipgloss.Right, textBlock, tBlock)
-}
-
-func TxInfoView(m model) string {
-	return m.textstyle.Render(fmt.Sprintf("No TxId yet but your address: %s, amount: %.2f EUR", m.address, float64(m.euro)))
 }
