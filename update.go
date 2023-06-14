@@ -34,6 +34,7 @@ func (m model) AddressInUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.textinput.Reset()
 			cmd(m.broker, "pulseacceptord", "start")
 			m.timer = timer.NewWithInterval(timeout, time.Second)
+			pricePause <- true
 			NextState(&m)
 			return m, tea.Batch(m.spinner.Tick, m.timer.Init())
 		}
@@ -81,6 +82,7 @@ func (m model) MoneyInUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, timerCmd
 	case timer.TimeoutMsg:
 		m.state = Idle
+		pricePause <- false
 		return m, nil
 	/*case timer.TickMsg:
 	var timerCmd tea.Cmd
@@ -109,6 +111,7 @@ func (m model) TxInfoUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		if msg.Type == tea.KeyEnter {
+			pricePause <- false
 			NextState(&m)
 		} /*
 			case timer.TickMsg:

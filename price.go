@@ -45,15 +45,23 @@ func getXmrPrice() (float64, error) {
 type priceEvent float64
 
 func pricePoll() {
+	d := 1 * time.Minute
+	pause := false
 	for {
-		price, err := getXmrPrice()
-		if err != nil {
-			log.Error().Err(err).Msg("Failed to get XMR/EUR price")
-		} else {
-			priceUpdate <- priceEvent(price)
+		select {
+		case p := <-pricePause:
+			pause = p
+		case <-time.After(d):
+			if !pause {
+				price, err := getXmrPrice()
+				if err != nil {
+					log.Error().Err(err).Msg("Failed to get XMR/EUR price")
+				} else {
+					priceUpdate <- priceEvent(price)
 
-			log.Info().Msg("Sent price update!")
+					log.Info().Msg("Sent price update!")
+				}
+			}
 		}
-		time.Sleep(1 * time.Minute)
 	}
 }

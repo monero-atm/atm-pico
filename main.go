@@ -43,6 +43,7 @@ type model struct {
 var sub chan proto.Event
 
 var priceUpdate chan priceEvent
+var pricePause chan bool
 
 func waitForActivity() tea.Cmd {
 	return func() tea.Msg {
@@ -58,7 +59,8 @@ func waitForPriceUpdate() tea.Cmd {
 
 func main() {
 	cfg = loadConfig()
-	priceUpdate = make(chan priceEvent) 
+	priceUpdate = make(chan priceEvent)
+	pricePause = make(chan bool)
 	go pricePoll()
 	p := tea.NewProgram(InitialModel())
 	if _, err := p.Run(); err != nil {
