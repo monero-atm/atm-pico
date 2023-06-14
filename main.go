@@ -7,7 +7,6 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/timer"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 	"github.com/eclipse/paho.golang/autopaho"
 	"github.com/rs/zerolog/log"
 	"gitlab.com/openkiosk/proto"
@@ -33,6 +32,7 @@ type model struct {
 	address   string
 	euro      int64
 	xmr       int64
+	xmrPrice  float64
 	height    int
 	width     int
 	textinput textinput.Model
@@ -49,14 +49,12 @@ func waitForActivity(sub chan proto.Event) tea.Cmd {
 	}
 }
 func main() {
+	cfg = loadConfig()
 	p := tea.NewProgram(InitialModel())
 	if _, err := p.Run(); err != nil {
 		log.Fatal().Err(err)
 	}
 }
-
-var titleStyle = lipgloss.NewStyle().Bold(true).Padding(1)
-var textStyle = lipgloss.NewStyle().Align(lipgloss.Center).Padding(2)
 
 func InitialModel() model {
 	ti := textinput.New()
@@ -66,14 +64,19 @@ func InitialModel() model {
 
 	sub = make(chan proto.Event)
 
+	xp, err := getXmrPrice()
+	if err != nil {
+		log.Fatal().Err(err).Msg("")
+		xp = 123.456
+	}
+
 	m := model{
 		timer:     timer.NewWithInterval(timeout, time.Second),
 		broker:    connectToBroker(),
 		state:     Idle,
 		textinput: ti,
+		xmrPrice:  xp,
 	}
-
-	spinnerStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("69"))
 
 	m.spinner = spinner.New()
 	m.spinner.Style = spinnerStyle
@@ -100,7 +103,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// These messages are handled always regardless of the state
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
-		textStyle.Width(msg.Width)
+		textStyleCentered.Width(msg.Width)
 		m.width = msg.Width
 		m.height = msg.Height
 	case tea.KeyMsg:

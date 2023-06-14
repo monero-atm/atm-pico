@@ -40,8 +40,6 @@ func onServerDisconnect(d *paho.Disconnect) {
 }
 
 func connectToBroker() *autopaho.ConnectionManager {
-	cfg = loadConfig()
-
 	cliCfg := autopaho.ClientConfig{
 		BrokerUrls:     cfg.Mqtt.BrokerUrls,
 		OnConnectionUp: onConnectionUp,
