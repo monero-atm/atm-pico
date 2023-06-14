@@ -61,7 +61,7 @@ func (m model) AddressInUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			m.textinput.SetValue(string(decoded))
 		}
-		return m, waitForActivity(sub)
+		return m, waitForActivity()
 	}
 	var tiCmd tea.Cmd
 	m.textinput, tiCmd = m.textinput.Update(msg)
@@ -96,7 +96,7 @@ func (m model) MoneyInUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			m.euro += data.Amount // record external activity
 		}
-		return m, waitForActivity(sub)
+		return m, waitForActivity()
 	case spinner.TickMsg:
 		var cmd tea.Cmd
 		m.spinner, cmd = m.spinner.Update(msg)

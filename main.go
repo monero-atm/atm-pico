@@ -39,17 +39,27 @@ type model struct {
 	spinner   spinner.Model
 }
 
+// MQTT events
 var sub chan proto.Event
 
-// A command that waits for the activity on a channel.
-func waitForActivity(sub chan proto.Event) tea.Cmd {
+var priceUpdate chan priceEvent
+
+func waitForActivity() tea.Cmd {
 	return func() tea.Msg {
-		log.Info().Msg("waitForActivity")
 		return <-sub
 	}
 }
+
+func waitForPriceUpdate() tea.Cmd {
+	return func() tea.Msg {
+		return <-priceUpdate
+	}
+}
+
 func main() {
 	cfg = loadConfig()
+	priceUpdate = make(chan priceEvent) 
+	go pricePoll()
 	p := tea.NewProgram(InitialModel())
 	if _, err := p.Run(); err != nil {
 		log.Fatal().Err(err)
@@ -88,7 +98,8 @@ func InitialModel() model {
 func (m model) Init() tea.Cmd {
 	m.state = Idle
 	return tea.Batch(tea.EnterAltScreen,
-		waitForActivity(sub)) // wait for activity
+		waitForActivity(),
+		waitForPriceUpdate())
 }
 
 func NextState(m *model) {
@@ -112,6 +123,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			brokerDisconnect(m.broker)
 			return m, tea.Quit
 		}
+	case priceEvent:
+		log.Info().Float64("rate", float64(msg)).Msg("Got price update!")
+		m.xmrPrice = float64(msg)
+		return m, waitForPriceUpdate()
 	}
 
 	switch m.state {

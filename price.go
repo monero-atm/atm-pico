@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"strconv"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 var endpoint = "https://api.kraken.com/0/public/Ticker?pair=XMREUR"
@@ -38,4 +40,20 @@ func getXmrPrice() (float64, error) {
 		return 0, err
 	}
 	return priceFloat, nil
+}
+
+type priceEvent float64
+
+func pricePoll() {
+	for {
+		price, err := getXmrPrice()
+		if err != nil {
+			log.Error().Err(err).Msg("Failed to get XMR/EUR price")
+		} else {
+			priceUpdate <- priceEvent(price)
+
+			log.Info().Msg("Sent price update!")
+		}
+		time.Sleep(1 * time.Minute)
+	}
 }
