@@ -10,7 +10,8 @@ import (
 func IdleView(m model) string {
 	text := titleStyle.Render("Welcome to MoneroKon 2023") + "\n\n" +
 		listHeaderStyle.Render("Current rate:") + "\n" +
-		listItemStyle.Render(fmt.Sprintf("1 XMR = %.3f EUR", m.xmrPrice))
+		listItemStyle.Render(fmt.Sprintf("1 XMR = %.3f %s", m.xmrPrice,
+			cfg.CurrencyShort))
 
 	w, h := lipgloss.Size(text)
 	coin := lipgloss.NewStyle().PaddingLeft((m.width - w - 9) / 2).Render(xmrCoinArt)
@@ -42,7 +43,7 @@ func AddressInView(m model) string {
 
 func MoneyInView(m model) string {
 	textBlock := textStyleCentered.Render(m.spinner.View(),
-		fmt.Sprintf("Received: %.2f EUR", float64(m.euro)/100))
+		fmt.Sprintf("Received: %.2f %s", float64(m.fiat)/100, cfg.CurrencyShort))
 
 	timerBlock := textStyleCentered.Render("Returning in", m.timer.View())
 
@@ -57,7 +58,7 @@ func MoneyInView(m model) string {
 func TxInfoView(m model) string {
 	textBlock := textStyleCentered.Render(fmt.Sprintf("TxId: %s\nAmount: %f\nFee: %f\nAddress: %s",
 		"78b5e0c836fabc8d210f00a94f0e2da45c5d0a14cbba1baf47cd3137c632c3ff",
-		float64(m.euro)/100, 0.0002, m.address))
+		float64(m.fiat)/100, 0.0002, m.address))
 
 	timerBlock := textStyleCentered.Render("Returning in", m.timer.View())
 

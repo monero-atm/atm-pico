@@ -10,6 +10,7 @@ import (
 	"github.com/eclipse/paho.golang/autopaho"
 	zone "github.com/lrstanley/bubblezone"
 	"github.com/rs/zerolog/log"
+	mpay "gitlab.com/moneropay/moneropay/v2/pkg/model"
 	"gitlab.com/openkiosk/proto"
 )
 
@@ -31,13 +32,14 @@ type model struct {
 	broker    *autopaho.ConnectionManager
 	state     State
 	address   string
-	euro      int64
-	xmr       int64
-	fee       int64
+	fiat      uint64
+	xmr       uint64
+	fee       uint64
 	xmrPrice  float64
 	err       error
 	height    int
 	width     int
+	tx        *mpay.TransferPostResponse
 	textinput textinput.Model
 	spinner   spinner.Model
 }

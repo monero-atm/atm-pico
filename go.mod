@@ -9,6 +9,8 @@ require (
 	github.com/eclipse/paho.golang v0.11.0
 	github.com/lrstanley/bubblezone v0.0.0-20230507010339-3326b9492591
 	github.com/rs/zerolog v1.29.1
+	gitlab.com/moneropay/go-monero v1.1.0
+	gitlab.com/moneropay/moneropay/v2 v2.2.2
 	gitlab.com/openkiosk/proto v0.0.0-20230612142012-deb2b471c26e
 	gopkg.in/yaml.v3 v3.0.1
 )

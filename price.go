@@ -45,13 +45,12 @@ func getXmrPrice() (float64, error) {
 type priceEvent float64
 
 func pricePoll() {
-	d := 1 * time.Minute
 	pause := false
 	for {
 		select {
 		case p := <-pricePause:
 			pause = p
-		case <-time.After(d):
+		case <-time.After(cfg.PricePollFreq):
 			if !pause {
 				price, err := getXmrPrice()
 				if err != nil {

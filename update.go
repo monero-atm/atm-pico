@@ -132,9 +132,13 @@ func (m model) AddressInUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m model) MoneyInNext() (tea.Model, tea.Cmd) {
+	if m.fiat == 0 {
+		return m, nil
+	}
 	m.state += 1
 	cmd(m.broker, "pulseacceptord", "stop")
 	m.timer = timer.NewWithInterval(1*time.Minute, time.Second)
+	m.tx, m.err = mpayTransfer(m.xmr, m.address)
 	return m, m.timer.Init()
 }
 
@@ -167,7 +171,7 @@ func (m model) MoneyInUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if err != nil {
 				log.Error().Err(err).Msg("Failed to unmarshall scan data")
 			}
-			m.euro += data.Amount
+			m.fiat += uint64(data.Amount)
 		}
 		return m, waitForActivity()
 	case spinner.TickMsg:
@@ -206,7 +210,7 @@ func (m model) TxInfoUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m model) BackToIdle() (tea.Model, tea.Cmd) {
 	m.state = Idle
 	m.address = ""
-	m.euro = 0
+	m.fiat = 0
 	m.xmr = 0
 	m.fee = 0
 	m.textinput.Reset()

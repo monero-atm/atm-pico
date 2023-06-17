@@ -21,14 +21,22 @@ type brokerConfig struct {
 }
 
 type backendConfig struct {
-	Mqtt      brokerConfig `yaml:"mqtt"`
-	Mode      string       `yaml:"mode"`
-	LogFormat string       `yaml:"log_format"`
+	Mqtt          brokerConfig  `yaml:"mqtt"`
+	Mode          string        `yaml:"mode"`
+	LogFormat     string        `yaml:"log_format"`
+	LogFile       string        `yaml:"log_file"`
+	Fee           float64       `yaml:"fee"`
+	Moneropay     string        `yaml:"moneropay"`
+	PricePollFreq time.Duration `yaml:"price_poll_frequency"`
+	CurrencyShort string        `yaml:"currency_short"`
 }
 
 func loadConfig() backendConfig {
 	var cfg backendConfig
-	file, err := os.ReadFile("config.yaml")
+	if len(os.Args) < 2 {
+		log.Fatal("Usage: ./atm-pico config.yaml")
+	}
+	file, err := os.ReadFile(os.Args[1])
 	if err != nil {
 		log.Fatal("Failed to read config: ", err)
 	}
@@ -36,7 +44,7 @@ func loadConfig() backendConfig {
 		log.Fatal("Failed to unmarshal yaml: ", err)
 	}
 
-	f, err := os.OpenFile("log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
+	f, err := os.OpenFile(cfg.LogFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0600)
 	if err != nil {
 		panic(err)
 	}

@@ -8,4 +8,9 @@ mqtt:
     - "codescannerd"
 
 log_format: "pretty"
+log_file: "log.txt"
 mode: "mainnet"
+fee: 1
+moneropay: "192.168.1.129:5000"
+price_poll_frequency: "5m"
+currency_short: "EUR"
