@@ -33,6 +33,7 @@ type model struct {
 	address    string
 	euro       int64
 	xmr        int64
+	fee        int64
 	xmrPrice   float64
 	height     int
 	width      int
@@ -103,21 +104,13 @@ func InitialModel() model {
 
 func (m model) Init() tea.Cmd {
 	m.state = Idle
+	cmd(m.broker, "codescannerd", "start")
 	return tea.Batch(tea.EnterAltScreen,
 		waitForActivity(),
 		waitForPriceUpdate())
 }
 
-func NextState(m *model) {
-	m.state += 1
-	if m.state > 3 {
-		// Reset to Idle
-		m.state = Idle
-	}
-}
-
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	// These messages are handled always regardless of the state
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		textStyleCentered.Width(msg.Width)

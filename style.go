@@ -22,6 +22,11 @@ var (
 				MarginLeft(5).
 				Bold(true)
 
+	doneButtonStyle = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("#FFF7DB")).
+			Background(lipgloss.Color("69")).
+			Padding(1, 3).
+			Bold(true)
 	xmrCoinArt = `   __
  /"  "\
 |_|\/|_|
