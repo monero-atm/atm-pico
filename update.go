@@ -8,35 +8,60 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/timer"
 	tea "github.com/charmbracelet/bubbletea"
+	zone "github.com/lrstanley/bubblezone"
 	"github.com/rs/zerolog/log"
 	"gitlab.com/openkiosk/proto"
 )
+
+func (m model) IdleNext() (tea.Model, tea.Cmd) {
+	cmd(m.broker, "codescannerd", "start")
+	NextState(&m)
+	m.timer = timer.NewWithInterval(timeout, time.Second)
+	return m, m.timer.Init()
+}
 
 func (m model) IdleUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 	log.Info().Msg("Hello from idle")
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		if msg.Type == tea.KeyEnter {
-			cmd(m.broker, "codescannerd", "start")
-			NextState(&m)
-			return m, m.timer.Init()
+			return m.IdleNext()
 		}
+	case tea.MouseMsg:
+		if msg.Type != tea.MouseLeft {
+			return m, nil
+		}
+		return m.IdleNext()
 	}
 	return m, nil
+}
+
+func (m model) AddressInNext() (tea.Model, tea.Cmd) {
+	cmd(m.broker, "codescannerd", "stop")
+	m.address = m.textinput.Value()
+	m.textinput.Reset()
+	cmd(m.broker, "pulseacceptord", "start")
+	m.timer = timer.NewWithInterval(timeout, time.Second)
+	pricePause <- true
+	NextState(&m)
+	return m, tea.Batch(m.spinner.Tick, m.timer.Init())
 }
 
 func (m model) AddressInUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		if msg.Type == tea.KeyEnter {
-			cmd(m.broker, "codescannerd", "stop")
-			m.address = m.textinput.Value()
-			m.textinput.Reset()
-			cmd(m.broker, "pulseacceptord", "start")
-			m.timer = timer.NewWithInterval(timeout, time.Second)
-			pricePause <- true
-			NextState(&m)
-			return m, tea.Batch(m.spinner.Tick, m.timer.Init())
+			return m.AddressInNext()
+		}
+	case tea.MouseMsg:
+		if msg.Type != tea.MouseLeft {
+			return m, nil
+		}
+		if zone.Get("next").InBounds(msg) {
+			return m.AddressInNext()
+		} else if zone.Get("back").InBounds(msg) {
+			m.state = Idle
+			return m, nil
 		}
 	case timer.TickMsg:
 		var timerCmd tea.Cmd
@@ -69,12 +94,27 @@ func (m model) AddressInUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, tiCmd
 }
 
+func (m model) MoneyInNext() (tea.Model, tea.Cmd) {
+	NextState(&m)
+	cmd(m.broker, "pulseacceptord", "stop")
+	return m, nil
+}
+
 func (m model) MoneyInUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		if msg.Type == tea.KeyEnter {
-			NextState(&m)
-			cmd(m.broker, "pulseacceptord", "stop")
+			return m.MoneyInNext()
+		}
+	case tea.MouseMsg:
+		if msg.Type != tea.MouseLeft {
+			return m, nil
+		}
+		if zone.Get("next").InBounds(msg) {
+			return m.MoneyInNext()
+		} else if zone.Get("back").InBounds(msg) {
+			m.state = Idle
+			return m, nil
 		}
 	case timer.TickMsg:
 		var timerCmd tea.Cmd
@@ -82,6 +122,7 @@ func (m model) MoneyInUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, timerCmd
 	case timer.TimeoutMsg:
 		m.state = Idle
+		m.timer = timer.NewWithInterval(timeout, time.Second)
 		pricePause <- false
 		return m, nil
 	/*case timer.TickMsg:

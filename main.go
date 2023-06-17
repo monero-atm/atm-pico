@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/bubbles/timer"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/eclipse/paho.golang/autopaho"
+	zone "github.com/lrstanley/bubblezone"
 	"github.com/rs/zerolog/log"
 	"gitlab.com/openkiosk/proto"
 )
@@ -25,18 +26,20 @@ var timeout = 30 * time.Second
 
 type model struct {
 	// Timer to automatically go back to idle state if the user left it alone
-	timer     timer.Model
-	showTimer bool
-	broker    *autopaho.ConnectionManager
-	state     State
-	address   string
-	euro      int64
-	xmr       int64
-	xmrPrice  float64
-	height    int
-	width     int
-	textinput textinput.Model
-	spinner   spinner.Model
+	timer      timer.Model
+	showTimer  bool
+	broker     *autopaho.ConnectionManager
+	state      State
+	address    string
+	euro       int64
+	xmr        int64
+	xmrPrice   float64
+	height     int
+	width      int
+	textinput  textinput.Model
+	spinner    spinner.Model
+	okButton   bool
+	backButton bool
 }
 
 // MQTT events
@@ -62,7 +65,8 @@ func main() {
 	priceUpdate = make(chan priceEvent)
 	pricePause = make(chan bool)
 	go pricePoll()
-	p := tea.NewProgram(InitialModel())
+	zone.NewGlobal()
+	p := tea.NewProgram(InitialModel(), tea.WithMouseCellMotion())
 	if _, err := p.Run(); err != nil {
 		log.Fatal().Err(err)
 	}
@@ -150,11 +154,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m model) View() string {
 	switch m.state {
 	case AddressIn:
-		return AddressInView(m)
+		return zone.Scan(AddressInView(m))
 	case MoneyIn:
-		return MoneyInView(m)
+		return zone.Scan(MoneyInView(m))
 	case TxInfo:
-		return TxInfoView(m)
+		return zone.Scan(TxInfoView(m))
 	}
 	return IdleView(m)
 }
