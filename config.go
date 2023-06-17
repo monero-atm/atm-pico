@@ -22,6 +22,7 @@ type brokerConfig struct {
 
 type backendConfig struct {
 	Mqtt      brokerConfig `yaml:"mqtt"`
+	Mode      string       `yaml:"mode"`
 	LogFormat string       `yaml:"log_format"`
 }
 

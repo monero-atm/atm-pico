@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/charmbracelet/bubbles/spinner"
+	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/timer"
 	tea "github.com/charmbracelet/bubbletea"
 	zone "github.com/lrstanley/bubblezone"
@@ -16,7 +17,7 @@ import (
 func (m model) IdleNext() (tea.Model, tea.Cmd) {
 	m.state += 1
 	m.timer = timer.NewWithInterval(timeout, time.Second)
-	return m, m.timer.Init()
+	return m, tea.Batch(textinput.Blink, m.timer.Init())
 }
 
 func (m model) IdleUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -45,34 +46,59 @@ func (m model) IdleUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m.IdleNext()
 		}
 		return m, waitForActivity()
-
 	}
 	return m, nil
 }
 
-func (m model) AddressInNext() (tea.Model, tea.Cmd) {
-	cmd(m.broker, "codescannerd", "stop")
-	m.address = m.textinput.Value()
+func (m model) AddressInNext(s string) (tea.Model, tea.Cmd) {
 	m.textinput.Reset()
+	m.address = s
+	cmd(m.broker, "codescannerd", "stop")
 	cmd(m.broker, "pulseacceptord", "start")
 	m.timer = timer.NewWithInterval(timeout, time.Second)
 	pricePause <- true
 	m.state += 1
+	log.Info().Msg(m.address)
 	return m, tea.Batch(m.spinner.Tick, m.timer.Init())
+}
+
+func addressValidator(s string) error {
+	if len(s) != 95 {
+		return fmt.Errorf("Invalid address length")
+	}
+	if cfg.Mode == "mainnet" && !(s[0] == '8' || s[0] == '4') {
+		return fmt.Errorf("Invalid mainnet address")
+	}
+	if cfg.Mode == "stagenet" && !(s[0] == '7' || s[0] == '5') {
+		return fmt.Errorf("Invalid stagenet address")
+	}
+	return nil
 }
 
 func (m model) AddressInUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		if msg.Type == tea.KeyEnter {
-			return m.AddressInNext()
+			s := m.textinput.Value()
+			err := addressValidator(s)
+			if err != nil {
+				m.err = err
+				return m, nil
+			}
+			return m.AddressInNext(s)
 		}
 	case tea.MouseMsg:
 		if msg.Type != tea.MouseLeft {
 			return m, nil
 		}
 		if zone.Get("next").InBounds(msg) {
-			return m.AddressInNext()
+			s := m.textinput.Value()
+			err := addressValidator(s)
+			if err != nil {
+				m.err = err
+				return m, nil
+			}
+			return m.AddressInNext(s)
 		} else if zone.Get("back").InBounds(msg) {
 			return m.BackToIdle()
 		}
@@ -108,7 +134,7 @@ func (m model) AddressInUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m model) MoneyInNext() (tea.Model, tea.Cmd) {
 	m.state += 1
 	cmd(m.broker, "pulseacceptord", "stop")
-	m.timer = timer.NewWithInterval(1 * time.Minute, time.Second)
+	m.timer = timer.NewWithInterval(1*time.Minute, time.Second)
 	return m, m.timer.Init()
 }
 
@@ -184,6 +210,7 @@ func (m model) BackToIdle() (tea.Model, tea.Cmd) {
 	m.xmr = 0
 	m.fee = 0
 	m.textinput.Reset()
+	m.err = nil
 	pricePause <- false
 	return m, nil
 }

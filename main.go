@@ -26,24 +26,22 @@ var timeout = 30 * time.Second
 
 type model struct {
 	// Timer to automatically go back to idle state if the user left it alone
-	timer      timer.Model
-	showTimer  bool
-	broker     *autopaho.ConnectionManager
-	state      State
-	address    string
-	euro       int64
-	xmr        int64
-	fee        int64
-	xmrPrice   float64
-	height     int
-	width      int
-	textinput  textinput.Model
-	spinner    spinner.Model
-	okButton   bool
-	backButton bool
+	timer     timer.Model
+	showTimer bool
+	broker    *autopaho.ConnectionManager
+	state     State
+	address   string
+	euro      int64
+	xmr       int64
+	fee       int64
+	xmrPrice  float64
+	err       error
+	height    int
+	width     int
+	textinput textinput.Model
+	spinner   spinner.Model
 }
 
-// MQTT events
 var sub chan proto.Event
 
 var priceUpdate chan priceEvent
@@ -76,8 +74,8 @@ func main() {
 func InitialModel() model {
 	ti := textinput.New()
 	ti.Placeholder = "8..."
+	//ti.Validate = addrValidator
 	ti.Focus()
-	// TODO: add input validator function here for address
 
 	sub = make(chan proto.Event)
 

@@ -23,9 +23,13 @@ func IdleView(m model) string {
 }
 
 func AddressInView(m model) string {
+	errMsg := ""
+	if m.err != nil {
+		errMsg = m.err.Error()
+	}
 	textBlock := textStyleCentered.Render(
 		"Enter the receiving address or scan QR code:\n\n",
-		m.textinput.View())
+		m.textinput.View(), "\n", errMsg)
 	timerBlock := textStyleCentered.Render("Returning in", m.timer.View())
 
 	okButton := activeButtonStyle.Render("Next")

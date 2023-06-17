@@ -8,3 +8,4 @@ mqtt:
     - "codescannerd"
 
 log_format: "pretty"
+mode: "mainnet"
