@@ -18,7 +18,7 @@ import (
 func (m model) IdleNext() (tea.Model, tea.Cmd) {
 	m.state += 1
 	m.timer = timer.NewWithInterval(timeout, time.Second)
-	return m, tea.Batch(textinput.Blink, m.timer.Init())
+	return m, tea.Batch(textinput.Blink, m.timer.Init(), waitForActivity())
 }
 
 func parseAddress(addr string) string {
@@ -73,7 +73,7 @@ func (m model) AddressInNext(s string) (tea.Model, tea.Cmd) {
 	pricePause <- true
 	m.state += 1
 	log.Info().Msg(m.address)
-	return m, tea.Batch(m.spinner.Tick, m.timer.Init())
+	return m, tea.Batch(m.spinner.Tick, m.timer.Init(), waitForActivity())
 }
 
 func addressValidator(s string) error {
@@ -231,5 +231,7 @@ func (m model) BackToIdle() (tea.Model, tea.Cmd) {
 	m.textinput.Reset()
 	m.err = nil
 	pricePause <- false
+	cmd(m.broker, "pulseacceptord", "stop")
+	cmd(m.broker, "codescannerd", "start")
 	return m, nil
 }
