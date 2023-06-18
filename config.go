@@ -29,6 +29,7 @@ type backendConfig struct {
 	Moneropay     string        `yaml:"moneropay"`
 	PricePollFreq time.Duration `yaml:"price_poll_frequency"`
 	CurrencyShort string        `yaml:"currency_short"`
+	Motd          string        `yaml:"motd"`
 }
 
 func loadConfig() backendConfig {

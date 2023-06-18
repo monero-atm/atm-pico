@@ -8,7 +8,7 @@ import (
 )
 
 func IdleView(m model) string {
-	text := titleStyle.Render("Welcome to MoneroKon 2023") + "\n\n" +
+	text := titleStyle.Render(cfg.Motd) + "\n\n" +
 		listHeaderStyle.Render("Current rate:") + "\n" +
 		listItemStyle.Render(fmt.Sprintf("1 XMR = %.3f %s", m.xmrPrice,
 			cfg.CurrencyShort))
