@@ -10,8 +10,8 @@ mqtt:
 log_format: "pretty"
 log_file: "log.txt"
 mode: "mainnet"
-fee: 1
+fee: 0.5
 moneropay: "192.168.1.129:5000"
 price_poll_frequency: "5m"
 currency_short: "EUR"
-motd: "Welcome to MoneroKon 2023!"
+motd: "Welcome to Monero Konferenco 2023!"

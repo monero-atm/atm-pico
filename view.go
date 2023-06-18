@@ -8,18 +8,24 @@ import (
 )
 
 func IdleView(m model) string {
-	text := titleStyle.Render(cfg.Motd) + "\n\n" +
-		listHeaderStyle.Render("Current rate:") + "\n" +
-		listItemStyle.Render(fmt.Sprintf("1 XMR = %.3f %s", m.xmrPrice,
+	motd := titleStyle.Render(cfg.Motd) + "\n\n"
+	spacing := (m.width-4) / 3
+	rate := listStyle.Width(spacing).Render(purpleListHeaderStyle.Render("Rate:") + "\n" +
+		fmt.Sprintf("1 XMR = %.3f %s", m.xmrPrice,
 			cfg.CurrencyShort))
 
-	w, h := lipgloss.Size(text)
-	coin := lipgloss.NewStyle().PaddingLeft((m.width - w - 9) / 2).Render(xmrCoinArt)
-	body := textStyle.Render(lipgloss.JoinHorizontal(0, text, coin))
+	fee :=  listStyle.Width(spacing).Render(pinkListHeaderStyle.Render("ATM fee:") + "\n" +
+		fmt.Sprintf("%.2f", cfg.Fee) + "%")
 
-	h = lipgloss.Height(body)
+	status :=  listStyle.Width(spacing).Render(orangeListHeaderStyle.Render("Status:") + "\n" +
+		"Connected " + checkMark)
+	
+	body := textStyle.Render(motd + lipgloss.JoinHorizontal(lipgloss.Top, rate, fee, status))
+
+	h := lipgloss.Height(body)
 	tBlock := lipgloss.Place(m.width, m.height-h, lipgloss.Center, lipgloss.Bottom,
-		titleStyle.Render("Touch or scan to begin")+"\n\nPowered by digilol.net\n\n")
+		titleStyle.Render("Touch or scan to begin")+"\n\nPowered by Digilol" +
+		divider + urlStyle.Render("www.digilol.net") + "\n\n")
 	return lipgloss.JoinVertical(lipgloss.Left, body, tBlock)
 }
 
