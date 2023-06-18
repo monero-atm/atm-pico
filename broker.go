@@ -57,38 +57,9 @@ func connectToBroker() *autopaho.ConnectionManager {
 	// Connect to the broker.
 	cm, err := autopaho.NewConnection(context.Background(), cliCfg)
 	if err != nil {
-		panic(err)
+		log.Error().Err(err).Msg("Failed to connect to the broker")
 	}
 	return cm
-	// This is where we send messages to ATM components.
-	// This isn't where we reply.
-	/*
-		go func(broker *autopaho.ConnectionManager) {
-			res := "stop"
-			for {
-				pr, err := broker.Publish(ctx, &paho.Publish{
-					QoS:     2,
-					Topic:   "codescannerd",
-					Payload: []byte(fmt.Sprintf(`{"cmd": "%s"}`, res)),
-				})
-				if err != nil {
-					log.Error().Err(err).Msg("Error publishing.")
-				} else if pr.ReasonCode != 0 && pr.ReasonCode != 16 { // 16 = Server received message but there are no subscribers
-					log.Warn().Int("reason_code", int(pr.ReasonCode)).Msg("")
-				}
-				log.Info().Str("state", res).Msg("Sent message: state change.")
-				time.Sleep(5 * time.Second)
-
-				if rand.Intn(6)%2 == 0 {
-					if res == "stop" {
-						res = "start"
-					} else {
-						res = "stop"
-					}
-				}
-			}
-		}(cm)
-	*/
 }
 
 func brokerDisconnect(cm *autopaho.ConnectionManager) {
@@ -99,6 +70,11 @@ func brokerDisconnect(cm *autopaho.ConnectionManager) {
 }
 
 func cmd(broker *autopaho.ConnectionManager, topic, cmd string) {
+	if err := broker.AwaitConnection(context.Background()); err != nil { // Should only happen when context is cancelled
+		log.Error().Err(err).Msg("AwaitConnection")
+		return
+	}
+
 	pr, err := broker.Publish(context.Background(), &paho.Publish{
 		QoS:     2,
 		Topic:   topic,
@@ -106,8 +82,10 @@ func cmd(broker *autopaho.ConnectionManager, topic, cmd string) {
 	})
 	if err != nil {
 		log.Error().Err(err).Msg("Error publishing.")
+		return
 	} else if pr.ReasonCode != 0 && pr.ReasonCode != 16 { // 16 = Server received message but there are no subscribers
 		log.Warn().Int("reason_code", int(pr.ReasonCode)).Msg("")
+		return
 	}
 	log.Info().Str("state", cmd).Msg("Sent message: state change.")
 }

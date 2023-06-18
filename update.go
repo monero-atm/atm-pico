@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/base64"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/charmbracelet/bubbles/spinner"
@@ -18,6 +19,18 @@ func (m model) IdleNext() (tea.Model, tea.Cmd) {
 	m.state += 1
 	m.timer = timer.NewWithInterval(timeout, time.Second)
 	return m, tea.Batch(textinput.Blink, m.timer.Init())
+}
+
+func parseAddress(addr string) string {
+	_, addressWithParams, found0 := strings.Cut(addr, ":")
+	if !found0 {
+		return addr
+	}
+	address, _, found1 := strings.Cut(addressWithParams, "?")
+	if !found1 {
+		return addressWithParams
+	}
+	return address
 }
 
 func (m model) IdleUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -42,7 +55,8 @@ func (m model) IdleUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if err != nil {
 				panic(err)
 			}
-			m.textinput.SetValue(string(decoded))
+			addr := parseAddress(string(decoded))
+			m.textinput.SetValue(addr)
 			return m.IdleNext()
 		}
 		return m, waitForActivity()
@@ -122,7 +136,8 @@ func (m model) AddressInUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if err != nil {
 				panic(err)
 			}
-			m.textinput.SetValue(string(decoded))
+			addr := parseAddress(string(decoded))
+			m.textinput.SetValue(addr)
 		}
 		return m, waitForActivity()
 	}

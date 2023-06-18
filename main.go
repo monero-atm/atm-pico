@@ -75,7 +75,9 @@ func main() {
 
 func InitialModel() model {
 	ti := textinput.New()
-	ti.Placeholder = "8..."
+	ti.Placeholder = "..."
+	ti.CharLimit = 95
+	ti.Width = 95
 	//ti.Validate = addrValidator
 	ti.Focus()
 
