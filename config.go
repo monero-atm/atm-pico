@@ -30,6 +30,9 @@ type backendConfig struct {
 	PricePollFreq time.Duration `yaml:"price_poll_frequency"`
 	CurrencyShort string        `yaml:"currency_short"`
 	Motd          string        `yaml:"motd"`
+	StateTimeout  time.Duration `yaml:"state_timeout"`
+	FinishTimeout time.Duration `yaml:"finish_timeout"`
+	FallbackPrice float64       `yaml:"fallback_price"`
 }
 
 func loadConfig() backendConfig {

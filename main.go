@@ -23,12 +23,8 @@ const (
 	TxInfo
 )
 
-var timeout = 30 * time.Second
-
 type model struct {
-	// Timer to automatically go back to idle state if the user left it alone
 	timer     timer.Model
-	showTimer bool
 	broker    *autopaho.ConnectionManager
 	state     State
 	address   string
@@ -78,19 +74,18 @@ func InitialModel() model {
 	ti.Placeholder = "..."
 	ti.CharLimit = 95
 	ti.Width = 95
-	//ti.Validate = addrValidator
 	ti.Focus()
 
 	sub = make(chan proto.Event)
 
 	xp, err := getXmrPrice()
 	if err != nil {
-		log.Fatal().Err(err).Msg("")
-		xp = 123.456
+		log.Fatal().Err(err).Msg("Failed to get XMR price")
+		xp = cfg.FallbackPrice
 	}
 
 	m := model{
-		timer:     timer.NewWithInterval(timeout, time.Second),
+		timer:     timer.NewWithInterval(cfg.StateTimeout, time.Second),
 		broker:    connectToBroker(),
 		state:     Idle,
 		textinput: ti,
@@ -144,8 +139,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-// View returns a string based on data in the model. That string which will be
-// rendered to the terminal.
 func (m model) View() string {
 	switch m.state {
 	case AddressIn:

@@ -17,7 +17,7 @@ import (
 
 func (m model) IdleNext() (tea.Model, tea.Cmd) {
 	m.state += 1
-	m.timer = timer.NewWithInterval(timeout, time.Second)
+	m.timer = timer.NewWithInterval(cfg.StateTimeout, time.Second)
 	return m, tea.Batch(textinput.Blink, m.timer.Init(), waitForActivity())
 }
 
@@ -69,7 +69,7 @@ func (m model) AddressInNext(s string) (tea.Model, tea.Cmd) {
 	m.address = s
 	cmd(m.broker, "codescannerd", "stop")
 	cmd(m.broker, "pulseacceptord", "start")
-	m.timer = timer.NewWithInterval(timeout, time.Second)
+	m.timer = timer.NewWithInterval(cfg.StateTimeout, time.Second)
 	pricePause <- true
 	m.state += 1
 	log.Info().Msg(m.address)
@@ -151,8 +151,12 @@ func (m model) MoneyInNext() (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 	m.state += 1
+
+	// Stop accepting money.
 	cmd(m.broker, "pulseacceptord", "stop")
-	m.timer = timer.NewWithInterval(1*time.Minute, time.Second)
+	m.timer = timer.NewWithInterval(cfg.FinishTimeout, time.Second)
+
+	// Make the transfer
 	m.tx, m.err = mpayTransfer(m.xmr, m.address)
 	return m, m.timer.Init()
 }
@@ -163,6 +167,7 @@ func (m model) MoneyInUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.Type == tea.KeyEnter {
 			return m.MoneyInNext()
 		}
+
 	case tea.MouseMsg:
 		if msg.Type != tea.MouseLeft {
 			return m, nil
@@ -172,12 +177,17 @@ func (m model) MoneyInUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else if zone.Get("back").InBounds(msg) {
 			return m.BackToIdle()
 		}
+
 	case timer.TickMsg:
 		var timerCmd tea.Cmd
 		m.timer, timerCmd = m.timer.Update(msg)
 		return m, timerCmd
+
 	case timer.TimeoutMsg:
-		return m.BackToIdle()
+		// Since the user has inputted money and their address already
+		// make a transfer anyways. Who knows, maybe they needed to
+		// run ¯\_(ツ)_/¯
+		return m.MoneyInNext()
 	case proto.Event:
 		log.Info().Str("type", msg.Event).Msg("Got event!")
 		log.Info().Msg("case proto.Event")

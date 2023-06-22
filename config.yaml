@@ -9,9 +9,33 @@ mqtt:
 
 log_format: "pretty"
 log_file: "log.txt"
+
+# Mainnet or stagenet.
 mode: "mainnet"
+
+# This is the ATM fee.
 fee: 0.5
+
+# Address of remote MoneroPay instance.
 moneropay: "192.168.1.129:5000"
+
+# Update the price value this often.
 price_poll_frequency: "5m"
+
+# Currency short name to display in UI.
 currency_short: "EUR"
+
+# Some message to display on the idle view
 motd: "Welcome to Monero Konferenco 2023!"
+
+# When to return to idle view after inactivity. If the user has
+# inputted address and money into the ATM already, after this much
+# time monero will be sent.
+state_timeout: "5m"
+
+# After a withdrawal has been completed, return to the idle view
+# after this much time.
+finish_timeout: "30s"
+
+# Rate to use if fetching it online wasn't possible.
+fallback_rate: 123.45
