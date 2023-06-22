@@ -72,6 +72,7 @@ func (m model) AddressInNext(s string) (tea.Model, tea.Cmd) {
 	m.timer = timer.NewWithInterval(cfg.StateTimeout, time.Second)
 	pricePause <- true
 	m.state += 1
+	m.err = nil
 	log.Info().Msg(m.address)
 	return m, tea.Batch(m.spinner.Tick, m.timer.Init(), waitForActivity())
 }
@@ -156,8 +157,22 @@ func (m model) MoneyInNext() (tea.Model, tea.Cmd) {
 	cmd(m.broker, "pulseacceptord", "stop")
 	m.timer = timer.NewWithInterval(cfg.FinishTimeout, time.Second)
 
+	// Calculate xmr given the rate and fiat
+	xmrFloat := float64(m.fiat) / (100 * m.xmrPrice)
+
+	// ATM fee cut
+	feeAmount := (xmrFloat * m.fee / 100)
+	m.xmr = uint64((xmrFloat - feeAmount) * 1000000000000)
+
+	log.Info().Float64("current_rate", m.xmrPrice).Uint64("fiat", m.fiat).
+		Float64("conv", xmrFloat).Float64("fee", feeAmount).
+		Uint64("final", m.xmr).Msg("Calculation")
+
 	// Make the transfer
 	m.tx, m.err = mpayTransfer(m.xmr, m.address)
+	if m.err != nil {
+		log.Error().Err(m.err).Msg("Failed to transfer")
+	}
 	return m, m.timer.Init()
 }
 
@@ -190,7 +205,6 @@ func (m model) MoneyInUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m.MoneyInNext()
 	case proto.Event:
 		log.Info().Str("type", msg.Event).Msg("Got event!")
-		log.Info().Msg("case proto.Event")
 		if msg.Event == "moneyin" {
 			data, err := proto.GetMoneyinData(msg.Data)
 			if err != nil {
@@ -223,9 +237,7 @@ func (m model) TxInfoUpdate(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.Type != tea.MouseLeft {
 			return m, nil
 		}
-		if zone.Get("next").InBounds(msg) {
-			return m.MoneyInNext()
-		} else if zone.Get("done").InBounds(msg) {
+		if zone.Get("done").InBounds(msg) {
 			return m.BackToIdle()
 		}
 	}

@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/url"
 	"time"
@@ -32,6 +33,13 @@ func mpayTransfer(amount uint64, address string) (*mpay.TransferPostResponse, er
 	resp, err := cl.Do(req)
 	if err != nil {
 		return nil, err
+	}
+	if resp.StatusCode != 200 {
+		var errResp mpay.ErrorResponse
+		if err := json.NewDecoder(resp.Body).Decode(&errResp); err != nil {
+			return nil, err
+		}
+		return nil, errors.New(errResp.Message)
 	}
 	var respData mpay.TransferPostResponse
 	if err := json.NewDecoder(resp.Body).Decode(&respData); err != nil {

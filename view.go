@@ -62,10 +62,13 @@ func MoneyInView(m model) string {
 }
 
 func TxInfoView(m model) string {
-	textBlock := textStyleCentered.Render(fmt.Sprintf("TxId: %s\nAmount: %f\nFee: %f\nAddress: %s",
-		"78b5e0c836fabc8d210f00a94f0e2da45c5d0a14cbba1baf47cd3137c632c3ff",
-		float64(m.fiat)/100, 0.0002, m.address))
-
+	textBlock := ""
+	if m.err != nil {
+		textBlock = textStyleCentered.Render("Failed to transfer: ", m.err.Error())
+	} else {
+		textBlock = textStyleCentered.Render(fmt.Sprintf("TxId: %s\nAmount: %f\nFee: %f\nAddress: %s",
+			m.tx.TxHash, float64(m.fiat)/100, 0.0002, m.address))
+	}
 	timerBlock := textStyleCentered.Render("Returning in", m.timer.View())
 
 	doneButton := doneButtonStyle.Render("Done")

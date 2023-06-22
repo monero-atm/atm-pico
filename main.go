@@ -30,7 +30,7 @@ type model struct {
 	address   string
 	fiat      uint64
 	xmr       uint64
-	fee       uint64
+	fee       float64
 	xmrPrice  float64
 	err       error
 	height    int
@@ -90,6 +90,7 @@ func InitialModel() model {
 		state:     Idle,
 		textinput: ti,
 		xmrPrice:  xp,
+		fee:       cfg.Fee,
 	}
 
 	m.spinner = spinner.New()

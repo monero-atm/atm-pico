@@ -11,13 +11,13 @@ log_format: "pretty"
 log_file: "log.txt"
 
 # Mainnet or stagenet.
-mode: "mainnet"
+mode: "stagenet"
 
-# This is the ATM fee.
+# This is the ATM fee percentage. For example 0.5 is 0.5%
 fee: 0.5
 
 # Address of remote MoneroPay instance.
-moneropay: "192.168.1.129:5000"
+moneropay: "http://192.168.2.206:5000"
 
 # Update the price value this often.
 price_poll_frequency: "5m"
