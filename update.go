@@ -161,11 +161,11 @@ func (m model) MoneyInNext() (tea.Model, tea.Cmd) {
 	xmrFloat := float64(m.fiat) / (100 * m.xmrPrice)
 
 	// ATM fee cut
-	feeAmount := (xmrFloat * m.fee / 100)
-	m.xmr = uint64((xmrFloat - feeAmount) * 1000000000000)
+	m.fee = xmrFloat * cfg.Fee / 100
+	m.xmr = uint64((xmrFloat - m.fee) * 1000000000000)
 
 	log.Info().Float64("current_rate", m.xmrPrice).Uint64("fiat", m.fiat).
-		Float64("conv", xmrFloat).Float64("fee", feeAmount).
+		Float64("conv", xmrFloat).Float64("fee", m.fee).
 		Uint64("final", m.xmr).Msg("Calculation")
 
 	// Make the transfer
@@ -252,6 +252,7 @@ func (m model) BackToIdle() (tea.Model, tea.Cmd) {
 	m.fee = 0
 	m.textinput.Reset()
 	m.err = nil
+	m.tx = nil
 	pricePause <- false
 	cmd(m.broker, "pulseacceptord", "stop")
 	cmd(m.broker, "codescannerd", "start")

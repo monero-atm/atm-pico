@@ -5,6 +5,7 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 	zone "github.com/lrstanley/bubblezone"
+	"gitlab.com/moneropay/go-monero/walletrpc"
 )
 
 func IdleView(m model) string {
@@ -66,8 +67,8 @@ func TxInfoView(m model) string {
 	if m.err != nil {
 		textBlock = textStyleCentered.Render("Failed to transfer: ", m.err.Error())
 	} else {
-		textBlock = textStyleCentered.Render(fmt.Sprintf("TxId: %s\nAmount: %f\nFee: %f\nAddress: %s",
-			m.tx.TxHash, float64(m.fiat)/100, 0.0002, m.address))
+		textBlock = textStyleCentered.Render(fmt.Sprintf("TxId: %s\nAmount: %s\nFee: %f\nAddress: %s",
+			m.tx.TxHash, walletrpc.XMRToDecimal(m.xmr), m.fee, m.address))
 	}
 	timerBlock := textStyleCentered.Render("Returning in", m.timer.View())
 

@@ -90,7 +90,6 @@ func InitialModel() model {
 		state:     Idle,
 		textinput: ti,
 		xmrPrice:  xp,
-		fee:       cfg.Fee,
 	}
 
 	m.spinner = spinner.New()
