@@ -28,6 +28,7 @@ Connect your components. Take notes of the GPIO input pins and serial device nam
 - BillyOne _pulse_ pin GPIO23, _enable_ pin connected to GPIO18.
 - Coin acceptor _coin_ (_pulse_) pin connected to GPIO27.
 - Serial QR code scanner is mapped to `/dev/ttyACM0`.
+- The 7-inch touchscreen HDMI display is powered on via Pi's USB port.
 
 ### Connecting the coin and bill acceptors
 Both acceptor devices require 12 volts. Since Raspberry Pi and many others use 5V, you can either choose to power these seperately or you can use a step down converter to supply 5V to the Pi from the same 12V power supply. In our MoneroKon PoC build we used two different adapters: 5V one for the Pi, 12V one for the bill and coin acceptors.
@@ -45,7 +46,7 @@ The numbers in paranthesis in the drawn diagram above are as described in BillyO
 ![BillyOne pulse interface pin datasheet](https://atm.monero.is/images/builds/pico/billyonepulse.jpg)
 
 ## Step 2 - The software
-Before starting the backend program (called atm-pico), make sure the pulseacceptord, coinacceptord and the MQTT bridge is up and running. For [pulseacceptord](https://gitlab.com/openkiosk/pulseacceptor/-/tree/master/cmd/pulseacceptord) the check the [OpenKiosk wiki](https://openkiosk.org/components/money_acceptors_pulse/) for instructions. And for [codescannerd](https://gitlab.com/openkiosk/codescanner/-/tree/master/cmd/codescannerd) see [here](https://openkiosk.org/components/serial_code_scanner/).
+Before starting the backend program (called atm-pico), make sure the pulseacceptord, coinacceptord and the MQTT bridge is up and running else the components might miss start/stop commands. If you have both bill and coin acceptors, you will have two instances of pulseacceptord running. You don't need to have MoneroPay running while testing but keep in mind that you won't be able to transfer Monero without it and the final step in the ATM will timeout.
 
 ### Bill acceptor configuration
 The following `pulseacceptord` configuration works for Alberici BillyOne:
@@ -167,15 +168,19 @@ fallback_rate: 123.45
 
 If you don't have a coin acceptor, bill acceptor or a QR code scanner you can omit these devices topics from the `topics` field. 
 ## Step 3 - Start it up
-The MQTT broker must be started first, followed by the component daemons and at last the daemon. 
+The MQTT broker must be started first, followed by the component daemons and at last the daemon.
+
+If all went well, you should have a working ATM without an enclosure already!
+
+![ATM working without the enclosure](https://atm.monero.is/images/builds/pico/bonelessatm.mp4)
 
 ## Step 4 - Enclosure
-Order 2-3 52 cm pizzas. Enjoy it. Keep the pizza boxes. Glue and cut them like this:
+Order 2-3 52 cm pizzas. Enjoy them. Keep the pizza boxes. Glue and cut them like this:
 
 Front:
 ![Pizza child](https://atm.monero.is/images/builds/pico/oilychild.jpg)
 Back:
-![Pizza box behind](https://atm.monero.is/images/builds/pico/oilychildback.jpg)
+![Pizza child behind](https://atm.monero.is/images/builds/pico/oilychildback.jpg)
 
 ## Need help?
 Join our Matrix room: [#atm:kernal.eu](https://matrix.to/#/#atm:kernal.eu)
