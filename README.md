@@ -34,15 +34,21 @@ Connect your components. Take notes of the GPIO input pins and serial device nam
 Both acceptor devices require 12 volts. Since Raspberry Pi and many others use 5V, you can either choose to power these seperately or you can use a step down converter to supply 5V to the Pi from the same 12V power supply. In our MoneroKon PoC build we used two different adapters: 5V one for the Pi, 12V one for the bill and coin acceptors.
 
 ![Connected components diagram](https://atm.monero.is/images/builds/pico/atmpicoacceptors.png)
+
 **Note:** The colors of the wires in this diagram do not match the pictures.
 
 Close up of coin acceptor pins:
+
 ![Close up of coin acceptor pins](https://atm.monero.is/images/builds/pico/coinacceptor.jpg)
+
 The adapter connects to all pins but the `COUNTER` pin is actually not used. This pin is undocumented, nobody really knows what it does.
 
 Close up of bill acceptor pins:
+
 ![Close up of bill acceptor pins](https://atm.monero.is/images/builds/pico/billacceptor.jpg)
+
 The numbers in paranthesis in the drawn diagram above are as described in BillyOne's datasheet:
+
 ![BillyOne pulse interface pin datasheet](https://atm.monero.is/images/builds/pico/billyonepulse.jpg)
 
 ## Step 2 - The software
@@ -175,11 +181,14 @@ If all went well, you should have a working ATM without an enclosure already!
 ![ATM working without the enclosure](https://atm.monero.is/images/builds/pico/bonelessatm.mp4)
 
 ## Step 4 - Enclosure
-Order 2-3 52 cm pizzas. Enjoy them. Keep the pizza boxes. Glue and cut them like this:
+Order 2-3 42 cm pizzas. Enjoy them. Keep the pizza boxes. Glue and cut them like this:
 
 Front:
+
 ![Pizza child](https://atm.monero.is/images/builds/pico/oilychild.jpg)
+
 Back:
+
 ![Pizza child behind](https://atm.monero.is/images/builds/pico/oilychildback.jpg)
 
 ## Need help?
