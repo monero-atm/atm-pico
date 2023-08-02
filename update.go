@@ -70,7 +70,11 @@ func (m model) AddressInNext(s string) (tea.Model, tea.Cmd) {
 	cmd(m.broker, "codescannerd", "stop")
 	cmd(m.broker, "pulseacceptord", "start")
 	m.timer = timer.NewWithInterval(cfg.StateTimeout, time.Second)
+
+	// Pause price updates and health checks
 	pricePause <- true
+	mpayHealthPause <- true
+
 	m.state += 1
 	m.err = nil
 	log.Info().Msg(m.address)
@@ -253,7 +257,10 @@ func (m model) BackToIdle() (tea.Model, tea.Cmd) {
 	m.textinput.Reset()
 	m.err = nil
 	m.tx = nil
+
+	// Resume price updates and health checks
 	pricePause <- false
+	mpayHealthPause <- false
 	cmd(m.broker, "pulseacceptord", "stop")
 	cmd(m.broker, "codescannerd", "start")
 	return m, nil

@@ -21,18 +21,20 @@ type brokerConfig struct {
 }
 
 type backendConfig struct {
-	Mqtt          brokerConfig  `yaml:"mqtt"`
-	Mode          string        `yaml:"mode"`
-	LogFormat     string        `yaml:"log_format"`
-	LogFile       string        `yaml:"log_file"`
-	Fee           float64       `yaml:"fee"`
-	Moneropay     string        `yaml:"moneropay"`
-	PricePollFreq time.Duration `yaml:"price_poll_frequency"`
-	CurrencyShort string        `yaml:"currency_short"`
-	Motd          string        `yaml:"motd"`
-	StateTimeout  time.Duration `yaml:"state_timeout"`
-	FinishTimeout time.Duration `yaml:"finish_timeout"`
-	FallbackPrice float64       `yaml:"fallback_price"`
+	Mqtt               brokerConfig  `yaml:"mqtt"`
+	Mode               string        `yaml:"mode"`
+	LogFormat          string        `yaml:"log_format"`
+	LogFile            string        `yaml:"log_file"`
+	Fee                float64       `yaml:"fee"`
+	Moneropay          string        `yaml:"moneropay"`
+	MpayTimeout        time.Duration `yaml:"moneropay_timeout"`
+	MpayHealthPollFreq time.Duration `yaml:"moneropay_health_poll_frequency"`
+	PricePollFreq      time.Duration `yaml:"price_poll_frequency"`
+	CurrencyShort      string        `yaml:"currency_short"`
+	Motd               string        `yaml:"motd"`
+	StateTimeout       time.Duration `yaml:"state_timeout"`
+	FinishTimeout      time.Duration `yaml:"finish_timeout"`
+	FallbackPrice      float64       `yaml:"fallback_price"`
 }
 
 func loadConfig() backendConfig {

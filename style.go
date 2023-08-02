@@ -17,7 +17,7 @@ var (
 			PaddingRight(1).
 			String()
 	cross = lipgloss.NewStyle().SetString("x").
-		Foreground(lipgloss.Color("2")).
+		Foreground(lipgloss.Color("196")).
 		PaddingRight(1).
 		String()
 

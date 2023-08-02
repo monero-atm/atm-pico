@@ -18,8 +18,14 @@ func IdleView(m model) string {
 	fee := listStyle.Width(spacing).Render(pinkListHeaderStyle.Render("ATM fee:") + "\n" +
 		fmt.Sprintf("%.2f", cfg.Fee) + "%")
 
-	status := listStyle.Width(spacing).Render(orangeListHeaderStyle.Render("Status:") + "\n" +
-		"Connected " + checkMark)
+	status := ""
+	if m.mpayHealth {
+		status = listStyle.Width(spacing).Render(orangeListHeaderStyle.Render("Status:") + "\n" +
+			"Connected " + checkMark)
+	} else {
+		status = listStyle.Width(spacing).Render(orangeListHeaderStyle.Render("Status:") + "\n" +
+			"Degraded " + cross)
+	}
 
 	body := textStyle.Render(motd + lipgloss.JoinHorizontal(lipgloss.Top, rate, fee, status))
 

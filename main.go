@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"time"
 
 	"github.com/charmbracelet/bubbles/spinner"
@@ -9,7 +10,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/eclipse/paho.golang/autopaho"
 	zone "github.com/lrstanley/bubblezone"
-	"github.com/rs/zerolog/log"
+	zlog "github.com/rs/zerolog/log"
 	mpay "gitlab.com/moneropay/moneropay/v2/pkg/model"
 	"gitlab.com/openkiosk/proto"
 )
@@ -24,26 +25,30 @@ const (
 )
 
 type model struct {
-	timer     timer.Model
-	broker    *autopaho.ConnectionManager
-	state     State
-	address   string
-	fiat      uint64
-	xmr       uint64
-	fee       float64
-	xmrPrice  float64
-	err       error
-	height    int
-	width     int
-	tx        *mpay.TransferPostResponse
-	textinput textinput.Model
-	spinner   spinner.Model
+	timer      timer.Model
+	broker     *autopaho.ConnectionManager
+	state      State
+	address    string
+	fiat       uint64
+	xmr        uint64
+	fee        float64
+	xmrPrice   float64
+	err        error
+	height     int
+	width      int
+	mpayHealth bool
+	tx         *mpay.TransferPostResponse
+	textinput  textinput.Model
+	spinner    spinner.Model
 }
 
 var sub chan proto.Event
 
 var priceUpdate chan priceEvent
 var pricePause chan bool
+
+var mpayHealthUpdate chan mpayHealthEvent
+var mpayHealthPause chan bool
 
 func waitForActivity() tea.Cmd {
 	return func() tea.Msg {
@@ -57,15 +62,24 @@ func waitForPriceUpdate() tea.Cmd {
 	}
 }
 
+func waitForMpayHealthUpdate() tea.Cmd {
+	return func() tea.Msg {
+		return <-mpayHealthUpdate
+	}
+}
+
 func main() {
 	cfg = loadConfig()
 	priceUpdate = make(chan priceEvent)
 	pricePause = make(chan bool)
+	mpayHealthUpdate = make(chan mpayHealthEvent)
+	mpayHealthPause = make(chan bool)
 	go pricePoll()
+	go mpayHealthPoll()
 	zone.NewGlobal()
 	p := tea.NewProgram(InitialModel(), tea.WithMouseCellMotion())
 	if _, err := p.Run(); err != nil {
-		log.Fatal().Err(err)
+		zlog.Fatal().Err(err)
 	}
 }
 
@@ -80,16 +94,25 @@ func InitialModel() model {
 
 	xp, err := getXmrPrice()
 	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to get XMR price")
-		xp = cfg.FallbackPrice
+		log.Fatal("Failed to get XMR price: ", err)
+	}
+
+	healthy := false
+	health, err := mpayHealth()
+	if err != nil {
+		log.Fatal("Failed to get MoneroPay health status: ", err)
+	}
+	if health.Status == 200 {
+		healthy = true
 	}
 
 	m := model{
-		timer:     timer.NewWithInterval(cfg.StateTimeout, time.Second),
-		broker:    connectToBroker(),
-		state:     Idle,
-		textinput: ti,
-		xmrPrice:  xp,
+		timer:      timer.NewWithInterval(cfg.StateTimeout, time.Second),
+		broker:     connectToBroker(),
+		state:      Idle,
+		textinput:  ti,
+		xmrPrice:   xp,
+		mpayHealth: healthy,
 	}
 
 	m.spinner = spinner.New()
@@ -104,7 +127,8 @@ func (m model) Init() tea.Cmd {
 	cmd(m.broker, "codescannerd", "start")
 	return tea.Batch(tea.EnterAltScreen,
 		waitForActivity(),
-		waitForPriceUpdate())
+		waitForPriceUpdate(),
+		waitForMpayHealthUpdate())
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -120,9 +144,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 	case priceEvent:
-		log.Info().Float64("rate", float64(msg)).Msg("Got price update!")
+		zlog.Info().Float64("rate", float64(msg)).Msg("Got price update!")
 		m.xmrPrice = float64(msg)
 		return m, waitForPriceUpdate()
+	case mpayHealthEvent:
+		m.mpayHealth = bool(msg)
+		return m, waitForMpayHealthUpdate()
 	}
 
 	switch m.state {

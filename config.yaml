@@ -17,7 +17,14 @@ mode: "stagenet"
 fee: 0.5
 
 # Address of remote MoneroPay instance.
-moneropay: "http://192.168.2.206:5000"
+moneropay: "http://localhost:5000"
+
+# Timeout for requests to MoneroPay. This option is important especially if the
+# ATM is located somewhere with poor network speeds.
+moneropay_timeout: "3m"
+
+# Check MoneroPay's /health this often.
+moneropay_health_poll_frequency: "10s"
 
 # Update the price value this often.
 price_poll_frequency: "5m"
