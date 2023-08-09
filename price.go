@@ -23,9 +23,9 @@ type krakenPair struct {
 }
 
 // Kraken only has XMR/EUR and XMR/USD pairs. When another fiat currency is
-// specified, this function will calculate the value in euros based on the
-// daily rate provided by European Central Bank. "fiatEurRate" contains this
-// rate. It's ignored when "currency" is set to EUR or USD.
+// specified, this function will calculate the value based on the daily rate
+// provided by European Central Bank. "fiatEurRate" contains this rate.
+// It's ignored when "currency" is set to EUR or USD.
 func getXmrPrice(currency string, fiatEurRate float64) (float64, error) {
 	// Target fiat currency to get rate of from Kraken
 	target := "EUR"
