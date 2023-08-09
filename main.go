@@ -74,7 +74,8 @@ func main() {
 	pricePause = make(chan bool)
 	mpayHealthUpdate = make(chan mpayHealthEvent)
 	mpayHealthPause = make(chan bool)
-	go pricePoll()
+
+	go pricePoll(cfg.CurrencyShort, cfg.FiatEurRate)
 	go mpayHealthPoll()
 	zone.NewGlobal()
 	p := tea.NewProgram(InitialModel(), tea.WithMouseCellMotion())
@@ -92,7 +93,7 @@ func InitialModel() model {
 
 	sub = make(chan proto.Event)
 
-	xp, err := getXmrPrice()
+	xp, err := getXmrPrice(cfg.CurrencyShort, cfg.FiatEurRate)
 	if err != nil {
 		log.Fatal("Failed to get XMR price: ", err)
 	}

@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/url"
 	"os"
+	"strconv"
 	"time"
 
 	"github.com/eclipse/paho.golang/paho"
@@ -35,6 +36,7 @@ type backendConfig struct {
 	StateTimeout       time.Duration `yaml:"state_timeout"`
 	FinishTimeout      time.Duration `yaml:"finish_timeout"`
 	FallbackPrice      float64       `yaml:"fallback_price"`
+	FiatEurRate        float64
 }
 
 func loadConfig() backendConfig {
@@ -71,6 +73,19 @@ func loadConfig() backendConfig {
 	cfg.Mqtt.Subscriptions = make(map[string]paho.SubscribeOptions)
 	for _, topic := range cfg.Mqtt.Topics {
 		cfg.Mqtt.Subscriptions[topic] = paho.SubscribeOptions{QoS: 2, NoLocal: true}
+	}
+
+	if cfg.CurrencyShort != "EUR" && cfg.CurrencyShort != "USD" {
+		rates, err := fetchEcbDaily()
+		if err != nil {
+			log.Fatalf("Failed to get fiat rate for %s from ECB: %s",
+				cfg.CurrencyShort, err.Error())
+		}
+		if val, ok := rates[cfg.CurrencyShort]; ok {
+			cfg.FiatEurRate, err = strconv.ParseFloat(val, 64)
+		} else {
+			log.Fatal("Failed to convert rate string into float64: ", err)
+		}
 	}
 
 	return cfg
