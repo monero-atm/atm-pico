@@ -79,7 +79,7 @@ func pricePoll(currency string, fiatEurRate float64) {
 			if !pause {
 				price, err := getXmrPrice(currency, fiatEurRate)
 				if err != nil {
-					log.Error().Err(err).Msg("Failed to get XMR/EUR price")
+					log.Error().Err(err).Msg("Failed to get XMR price")
 				} else {
 					priceUpdate <- priceEvent(price)
 
