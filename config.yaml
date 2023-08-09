@@ -30,7 +30,7 @@ moneropay_health_poll_frequency: "10s"
 price_poll_frequency: "5m"
 
 # Currency short name to display in UI.
-currency_short: "ISK"
+currency_short: "EUR"
 
 # Some message to display on the idle view
 motd: "Welcome to Monero Konferenco 2023!"
