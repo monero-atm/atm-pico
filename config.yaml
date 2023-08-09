@@ -11,7 +11,7 @@ log_format: "pretty"
 log_file: "log.txt"
 
 # Mainnet or stagenet.
-mode: "stagenet"
+mode: "mainnet"
 
 # This is the ATM fee percentage. For example 0.5 is 0.5%
 fee: 0.5

@@ -9,18 +9,31 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-var endpoint = "https://api.kraken.com/0/public/Ticker?pair=XMREUR"
+var krakenUrl = "https://api.kraken.com/0/public/Ticker?pair=XMR"
 
 type krakenPair struct {
 	Result struct {
 		XmrEur struct {
 			C []string `json:"c"`
 		} `json:"XXMRZEUR"`
+		XmrUsd struct {
+			C []string `json:"c"`
+		} `json:"XXMRZUSD"`
 	} `json:"result"`
 }
 
-func getXmrPrice() (float64, error) {
-	req, err := http.NewRequest("GET", endpoint, nil)
+// Kraken only has XMR/EUR and XMR/USD pairs. When another fiat currency is
+// specified, this function will calculate the value based on the daily rate
+// provided by European Central Bank. "fiatEurRate" contains this rate.
+// It's ignored when "currency" is set to EUR or USD.
+func getXmrPrice(currency string, fiatEurRate float64) (float64, error) {
+	// Target fiat currency to get rate of from Kraken
+	target := "EUR"
+	if currency == "USD" {
+		target = "USD"
+	}
+
+	req, err := http.NewRequest("GET", krakenUrl+target, nil)
 	if err != nil {
 		return 0, err
 	}
@@ -35,16 +48,28 @@ func getXmrPrice() (float64, error) {
 		return 0, err
 	}
 
-	priceFloat, err := strconv.ParseFloat(kp.Result.XmrEur.C[0], 64)
+	var rate string
+	if target == "EUR" {
+		rate = kp.Result.XmrEur.C[0]
+	} else {
+		rate = kp.Result.XmrUsd.C[0]
+	}
+
+	rateFloat, err := strconv.ParseFloat(rate, 64)
 	if err != nil {
 		return 0, err
 	}
-	return priceFloat, nil
+
+	if currency == "EUR" || currency == "USD" {
+		return rateFloat, nil
+	}
+
+	return rateFloat * fiatEurRate, nil
 }
 
 type priceEvent float64
 
-func pricePoll() {
+func pricePoll(currency string, fiatEurRate float64) {
 	pause := false
 	for {
 		select {
@@ -52,9 +77,9 @@ func pricePoll() {
 			pause = p
 		case <-time.After(cfg.PricePollFreq):
 			if !pause {
-				price, err := getXmrPrice()
+				price, err := getXmrPrice(currency, fiatEurRate)
 				if err != nil {
-					log.Error().Err(err).Msg("Failed to get XMR/EUR price")
+					log.Error().Err(err).Msg("Failed to get XMR price")
 				} else {
 					priceUpdate <- priceEvent(price)
 
